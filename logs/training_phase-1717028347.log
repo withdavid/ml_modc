@@ -1,0 +1,15 @@
+2024-05-30 02:19:07,475 INFO:Processing file: dataset/test/final_dataset.csv
+2024-05-30 02:21:04,925 INFO:Started the process of treating data of the dataset...
+2024-05-30 02:21:04,927 INFO:Memory usage of dataframe is 8297.30 MB
+2024-05-30 02:21:31,830 INFO:Memory usage after optimization is: 3258.22 MB
+2024-05-30 02:21:31,830 INFO:Decreased by 60.7%
+2024-05-30 02:21:49,140 INFO:Process concluded with success.
+
+2024-05-30 02:21:49,140 INFO:Starting model training for file: final_dataset.csv
+2024-05-30 02:23:53,194 INFO:Accuracy: 0.5630413265499581, Precision: 0.7748300611597724, Recall: 0.15824029284179264, F1 Score: 0.2628083407745711, Training time: 34.33 seconds, Model: GaussianNB
+2024-05-30 03:08:15,348 INFO:Accuracy: 0.9926235370568677, Precision: 0.9936297999481353, Recall: 0.9913693488360973, F1 Score: 0.9924982873287861, Training time: 2640.70 seconds, Model: RandomForest
+2024-05-30 03:16:35,146 INFO:Accuracy: 0.8329140140505301, Precision: 0.8643800551801915, Recall: 0.7834649580686892, F1 Score: 0.8219358959638736, Training time: 3205.17 seconds, Model: LogisticRegression
+2024-05-30 04:34:59,910 INFO:Accuracy: 0.6761665300316025, Precision: 0.9997004380123985, Recall: 0.3421876535732596, F1 Score: 0.5098564467553974, Training time: 7912.71 seconds, Model: MLP
+2024-05-30 04:35:00,362 INFO:Best model: RandomForest with F1 Score: 0.9924982873287861, training time: 2640.70 seconds, saved successfully as ./saved_model_kaggle/final_dataset_RandomForestFULLDATASET.sav
+
+2024-05-30 04:35:00,405 INFO:All CSV files processed, models trained, and best models saved successfully.

@@ -1,0 +1,11 @@
+2024-05-30 18:47:39,895 INFO:Processing file: dataset/final_dataset.csv
+2024-05-30 18:50:52,459 INFO:Started the process of treating data of the dataset...
+2024-05-30 18:50:52,462 INFO:Memory usage of dataframe is 8297.30 MB
+2024-05-30 18:51:19,927 INFO:Memory usage after optimization is: 3258.22 MB
+2024-05-30 18:51:19,927 INFO:Decreased by 60.7%
+2024-05-30 18:51:36,229 INFO:Process concluded with success.
+
+2024-05-30 18:51:36,229 INFO:Starting model training for file: final_dataset.csv
+2024-05-30 18:51:40,882 ERROR:Error in training model for file final_dataset.csv: could not convert string to float: 'Benign'
+2024-05-30 18:51:40,882 ERROR:Error processing file final_dataset.csv: could not convert string to float: 'Benign'
+2024-05-30 18:51:41,006 INFO:All CSV files processed, models trained, and best models saved successfully.
