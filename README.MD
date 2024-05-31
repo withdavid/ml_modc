@@ -36,7 +36,6 @@ python3 parse_traces.py raw_traces.csv
 
 O arquivo `traces.txt` será criado com os valores que você escolheu.
 
-
 ## Passo 5: Classificar Traces
 
 Após o modelo ser treinado e salvo, você pode classificar novos traces. Para isso, execute o comando abaixo:
@@ -45,11 +44,21 @@ Após o modelo ser treinado e salvo, você pode classificar novos traces. Para i
 python3 classify-traces.py traces.txt
 ```
 
+## Dados ML
+
+| Model                 | Precision (%) | Recall (%) | F1-Score (%) | Accuracy (%) |
+|-----------------------|---------------|------------|--------------|--------------|
+| Random Forest         | 99.977        | 99.960     | 99.969       | 99.969       |
+| MLP                   | 99.321        | 98.382     | 98.849       | 98.872       |
+| Gaussian Naive Bayes  | 91.461        | 61.984     | 73.891       | 78.439       |
+| Regressão Logística   | 91.532        | 61.237     | 73.381       | 78.132       |
+
+![Imagem do Projeto](imagens/confusion_matrix.png)
+
 ## Estrutura do Projeto
 
 ```
 .
-
 ├── dataset
 │   └── final_dataset.csv
 ├── saved_model
