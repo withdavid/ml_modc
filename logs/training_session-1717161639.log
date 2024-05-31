@@ -1,0 +1,22 @@
+2024-05-31 15:20:39,521 INFO:Reading dataset..
+2024-05-31 15:22:02,012 INFO:Dataset was successfully read.
+2024-05-31 15:22:02,013 INFO:Started the process of treating data of the dataset...
+2024-05-31 15:22:16,702 INFO:Process concluded with success. 
+
+2024-05-31 15:22:16,702 INFO:Model Training:
+2024-05-31 15:22:16,837 INFO:Class distribution in the dataset: Label
+ddos      6472617
+Benign    6274230
+Name: count, dtype: int64
+2024-05-31 15:22:17,834 INFO:Training model: RandomForest
+2024-05-31 15:37:40,178 INFO:Accuracy of the model RandomForest is: 99.970032
+2024-05-31 15:37:40,178 INFO:Precision of the model RandomForest is: 99.978320
+2024-05-31 15:37:40,178 INFO:Recall of the model RandomForest is: 99.960792
+2024-05-31 15:37:40,178 INFO:F1 score of the model RandomForest is: 99.96955496046927
+2024-05-31 15:37:40,178 INFO:
+Best model is RandomForest with F1 score: 99.96955496046927
+2024-05-31 15:38:01,661 INFO:
+Confusion Matrix:
+2024-05-31 15:38:01,661 INFO:[[1881507     738]
+ [    408 1941402]]
+2024-05-31 15:38:01,721 INFO:Confusion matrix image saved as 'confusion_matrix.png'.

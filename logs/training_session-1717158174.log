@@ -1,0 +1,41 @@
+2024-05-31 14:22:54,706 INFO:Reading dataset..
+2024-05-31 14:24:12,762 INFO:Dataset was successfully read.
+2024-05-31 14:24:12,762 INFO:Started the process of treating data of the dataset...
+2024-05-31 14:24:22,274 INFO:Process concluded with success. 
+
+2024-05-31 14:24:22,274 INFO:Model Training:
+2024-05-31 14:24:22,408 INFO:Class distribution in the dataset: Label
+ddos      6472617
+Benign    6274230
+Name: count, dtype: int64
+2024-05-31 14:24:23,400 INFO:Training model: RandomForest
+2024-05-31 14:39:52,408 INFO:Accuracy of the model RandomForest is: 99.969692
+2024-05-31 14:39:52,408 INFO:Precision of the model RandomForest is: 99.977948
+2024-05-31 14:39:52,408 INFO:Recall of the model RandomForest is: 99.960473
+2024-05-31 14:39:52,408 INFO:F1 score of the model RandomForest is: 99.96920960607157
+2024-05-31 14:39:52,408 INFO:Training model: LogisticRegression
+2024-05-31 14:41:38,148 INFO:Accuracy of the model LogisticRegression is: 78.132297
+2024-05-31 14:41:38,148 INFO:Precision of the model LogisticRegression is: 91.532739
+2024-05-31 14:41:38,148 INFO:Recall of the model LogisticRegression is: 61.237352
+2024-05-31 14:41:38,148 INFO:F1 score of the model LogisticRegression is: 73.38115114815915
+2024-05-31 14:41:38,148 INFO:Training model: GaussianNB
+2024-05-31 14:42:33,376 INFO:Accuracy of the model GaussianNB is: 78.439981
+2024-05-31 14:42:33,376 INFO:Precision of the model GaussianNB is: 91.461589
+2024-05-31 14:42:33,376 INFO:Recall of the model GaussianNB is: 61.984226
+2024-05-31 14:42:33,376 INFO:F1 score of the model GaussianNB is: 73.89156633755107
+2024-05-31 14:42:33,376 INFO:Training model: MLP
+2024-05-31 15:15:43,208 INFO:Accuracy of the model MLP is: 98.872741
+2024-05-31 15:15:43,208 INFO:Precision of the model MLP is: 99.321194
+2024-05-31 15:15:43,208 INFO:Recall of the model MLP is: 98.382198
+2024-05-31 15:15:43,208 INFO:F1 score of the model MLP is: 98.84946599603117
+2024-05-31 15:15:43,208 INFO:
+Best model is RandomForest with F1 score: 99.96920960607157
+2024-05-31 15:16:49,015 INFO:Accuracy of the model RandomForest is: 49.221180
+2024-05-31 15:16:49,016 INFO:Precision of the model RandomForest is: 49.221180
+2024-05-31 15:16:49,016 INFO:Recall of the model RandomForest is: 100.000000
+2024-05-31 15:16:49,016 INFO:F1 score of the model RandomForest is: 65.970769
+2024-05-31 15:16:49,016 INFO:
+Confusion Matrix:
+2024-05-31 15:16:49,016 INFO:[[1882245       0]
+ [1941810       0]]
+2024-05-31 15:16:49,086 INFO:Confusion matrix image saved as 'confusion_matrix.png'.

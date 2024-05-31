@@ -1,8 +1,0 @@
-2024-05-30 00:49:42,574 INFO:Processing file: dataset/test/final_dataset.csv
-2024-05-30 00:51:43,570 INFO:Started the process of treating data of the dataset...
-2024-05-30 00:51:43,572 INFO:Memory usage of dataframe is 8297.30 MB
-2024-05-30 00:51:57,689 INFO:Memory usage after optimization is: 3258.22 MB
-2024-05-30 00:51:57,689 INFO:Decreased by 60.7%
-2024-05-30 00:52:09,898 INFO:Process concluded with success.
-
-2024-05-30 00:52:09,898 INFO:Starting model training for file: final_dataset.csv

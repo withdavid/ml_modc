@@ -1,23 +1,25 @@
-import os
-import time
 import pandas as pd
 import numpy as np
+import logging, os, time
 import pickle
-import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_selection import SelectKBest, f_classif
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+if not os.path.exists('dataset'):
+    os.makedirs('dataset')
 
 # Configure the logger
 log_folder = 'logs'
 if not os.path.exists(log_folder):
     os.makedirs(log_folder)
-log_filename = os.path.join(log_folder, f'training_phase-{int(time.time())}.log')
+log_filename = os.path.join(log_folder, f'training_session-{int(time.time())}.log')
 
 # Set up logging to file and console
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s:%(message)s')
@@ -27,187 +29,202 @@ file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s:%(message)s'))
 logger.addHandler(file_handler)
 
-def reduce_mem_usage(df):
-    """Iterate through all the columns of a dataframe and modify the data type to reduce memory usage."""
-    start_mem = df.memory_usage().sum() / 1024**2
-    logger.info(f'Memory usage of dataframe is {start_mem:.2f} MB')
-    
-    for col in df.columns:
-        col_type = df[col].dtype
-        
-        if col_type != object:
-            c_min = df[col].min()
-            c_max = df[col].max()
-            try:
-                if str(col_type)[:3] == 'int':
-                    if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
-                        df[col] = df[col].astype(np.int8)
-                    elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
-                        df[col] = df[col].astype(np.int16)
-                    elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
-                        df[col] = df[col].astype(np.int32)
-                    else:
-                        df[col] = df[col].astype(np.int64)
-                else:
-                    if c_min > np.finfo(np.float16).min and c_max < np.finfo(np.float16).max:
-                        df[col] = df[col].astype(np.float16)
-                    elif c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
-                        df[col] = df[col].astype(np.float32)
-                    else:
-                        df[col] = df[col].astype(np.float64)
-            except Exception as e:
-                logger.error(f"Error converting column {col}: {e}")
-        else:
-            df[col] = df[col].astype('category')
-    end_mem = df.memory_usage().sum() / 1024**2
-    logger.info(f'Memory usage after optimization is: {end_mem:.2f} MB')
-    logger.info(f'Decreased by {(100 * (start_mem - end_mem) / start_mem):.1f}%')
-    
-    return df
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
+
+dtypes = {
+    'Src IP': 'category',
+    'Src Port': 'uint16',
+    'Dst IP': 'category',
+    'Dst Port': 'uint16',
+    'Protocol': 'category',
+    'Flow Duration': 'uint32',
+    'Tot Fwd Pkts': 'uint32',
+    'Tot Bwd Pkts': 'uint32',
+    'TotLen Fwd Pkts': 'float32',
+    'TotLen Bwd Pkts': 'float32',
+    'Fwd Pkt Len Max': 'float32',
+    'Fwd Pkt Len Min': 'float32',
+    'Fwd Pkt Len Mean': 'float32',
+    'Fwd Pkt Len Std': 'float32',
+    'Bwd Pkt Len Max': 'float32',
+    'Bwd Pkt Len Min': 'float32',
+    'Bwd Pkt Len Mean': 'float32',
+    'Bwd Pkt Len Std': 'float32',
+    'Flow Byts/s': 'float32',
+    'Flow Pkts/s': 'float32',
+    'Flow IAT Mean': 'float32',
+    'Flow IAT Std': 'float32',
+    'Flow IAT Max': 'float32',
+    'Flow IAT Min': 'float32',
+    'Fwd IAT Tot': 'float32',
+    'Fwd IAT Mean': 'float32',
+    'Fwd IAT Std': 'float32',
+    'Fwd IAT Max': 'float32',
+    'Fwd IAT Min': 'float32',
+    'Bwd IAT Tot': 'float32',
+    'Bwd IAT Mean': 'float32',
+    'Bwd IAT Std': 'float32',
+    'Bwd IAT Max': 'float32',
+    'Bwd IAT Min': 'float32',
+    'Fwd PSH Flags': 'category',
+    'Bwd PSH Flags': 'category',
+    'Fwd URG Flags': 'category',
+    'Bwd URG Flags': 'category',
+    'Fwd Header Len': 'uint32',
+    'Bwd Header Len': 'uint32',
+    'Fwd Pkts/s': 'float32',
+    'Bwd Pkts/s': 'float32',
+    'Pkt Len Min': 'float32',
+    'Pkt Len Max': 'float32',
+    'Pkt Len Mean': 'float32',
+    'Pkt Len Std': 'float32',
+    'Pkt Len Var': 'float32',
+    'FIN Flag Cnt': 'category',
+    'SYN Flag Cnt': 'category',
+    'RST Flag Cnt': 'category',
+    'PSH Flag Cnt': 'category',
+    'ACK Flag Cnt': 'category',
+    'URG Flag Cnt': 'category',
+    'CWE Flag Count': 'category',
+    'ECE Flag Cnt': 'category',
+    'Down/Up Ratio': 'float32',
+    'Pkt Size Avg': 'float32',
+    'Fwd Seg Size Avg': 'float32',
+    'Bwd Seg Size Avg': 'float32',
+    'Fwd Byts/b Avg': 'uint32',
+    'Fwd Pkts/b Avg': 'uint32',
+    'Fwd Blk Rate Avg': 'uint32',
+    'Bwd Byts/b Avg': 'uint32',
+    'Bwd Pkts/b Avg': 'uint32',
+    'Bwd Blk Rate Avg': 'uint32',
+    'Subflow Fwd Pkts': 'uint32',
+    'Subflow Fwd Byts': 'uint32',
+    'Subflow Bwd Pkts': 'uint32',
+    'Subflow Bwd Byts': 'uint32',
+    'Init Fwd Win Byts': 'uint32',
+    'Init Bwd Win Byts': 'uint32',
+    'Fwd Act Data Pkts': 'uint32',
+    'Fwd Seg Size Min': 'uint32',
+    'Active Mean': 'float32',
+    'Active Std': 'float32',
+    'Active Max': 'float32',
+    'Active Min': 'float32',
+    'Idle Mean': 'float32',
+    'Idle Std': 'float32',
+    'Idle Max': 'float32',
+    'Idle Min': 'float32',
+    'Label': 'category'
+}
+
+logger.info("Reading dataset..")
+
+df = pd.read_csv('./dataset/final_dataset.csv',
+     dtype=dtypes,
+     parse_dates=['Timestamp'],
+     usecols=[*dtypes.keys(), 'Timestamp'],
+     engine='c',
+     low_memory=True
+     )
+
+logger.info("Dataset was successfully read.")
+
+def plot_confusion_matrix(matrix, class_names):
+
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(matrix, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.title('Confusion Matrix')
+    plt.savefig('./confusion_matrix_v3.png')
+    logger.info("Confusion matrix image saved as 'confusion_matrix.png'.")
 
 def treatDataset(df):
-    try:
-        logger.info("Started the process of treating data of the dataset...")
-        df = reduce_mem_usage(df)
+    logger.info("Started the process of treating data of the dataset...")
+    # Drop columns that have only 1 value viewed
+    colsToDrop = np.array(['Fwd Byts/b Avg', 'Fwd Pkts/b Avg', 'Fwd Blk Rate Avg', 'Bwd Byts/b Avg', 'Bwd Pkts/b Avg', 'Bwd Blk Rate Avg'])
 
-        # Identificar colunas com mais de 40% de valores ausentes para remoção
-        missing = df.isna().sum()
-        missing = pd.DataFrame({'count': missing, '% of total': missing / len(df) * 100}, index=df.columns)
-        colsToDrop = missing[missing['% of total'] >= 40].index.values
-        dropnaCols = missing[(missing['% of total'] > 0) & (missing['% of total'] <= 5)].index.values
+    # Drop columns where missing values are more than 40% and Drop rows where a column missing values are no more than 5%
+    missing = df.isna().sum()
+    missing = pd.DataFrame({'count': missing, '% of total': missing/len(df)*100}, index=df.columns)
+    colsToDrop = np.union1d(colsToDrop, missing[missing['% of total'] >= 40].index.values)
+    dropnaCols = missing[(missing['% of total'] > 0) & (missing['% of total'] <= 5)].index.values
 
-        # Tratamento de valores infinitos
-        if 'Flow Byts/s' in df.columns:
-            df['Flow Byts/s'] = df['Flow Byts/s'].replace(np.inf, np.nan)
-            dropnaCols = np.union1d(dropnaCols, ['Flow Byts/s'])
-        if 'Flow Pkts/s' in df.columns:
-            df['Flow Pkts/s'] = df['Flow Pkts/s'].replace(np.inf, np.nan)
-            dropnaCols = np.union1d(dropnaCols, ['Flow Pkts/s'])
+    # Handling faulty data
+    df['Flow Byts/s'].replace(np.inf, np.nan, inplace=True)
+    df['Flow Pkts/s'].replace(np.inf, np.nan, inplace=True)
+    dropnaCols = np.union1d(dropnaCols, ['Flow Byts/s', 'Flow Pkts/s'])
 
-        # Remover colunas identificadas para drop
-        colsToDrop = [col for col in colsToDrop if col in df.columns]
-        df.drop(columns=colsToDrop, inplace=True)
-        df.dropna(subset=dropnaCols, inplace=True)
-        logger.info("Process concluded with success.\n")
-        return df
-    except Exception as e:
-        logger.error(f"Error in treating dataset: {e}")
-        raise
+    # Drop the columns
+    df.drop(columns=colsToDrop, inplace=True)
+    df.dropna(subset=dropnaCols, inplace=True)
+    logger.info("Process concluded with success. \n")
+    return df
 
-def train_classifier(name, model, x_train, y_train, x_test, y_test, positive_label):
-    try:
-        start_time = time.time()
+def train_and_evaluate_models(df):
+    logger.info("Model Training:")
+    features = ["Fwd Seg Size Avg", "Flow IAT Min", "Flow Duration", "Tot Fwd Pkts", "Pkt Size Avg", "Src Port", "Init Bwd Win Byts"]
+    target = "Label"
+
+    x = df.loc[:,features]
+    y = df.loc[:,target]
+
+    logger.info("Class distribution in the dataset: %s", y.value_counts())
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=42, test_size=0.3)
+
+    models = {
+        "RandomForest": RandomForestClassifier(),
+        "LogisticRegression": LogisticRegression(max_iter=10000),
+        "GaussianNB": GaussianNB(),
+        "MLP": MLPClassifier(max_iter=1000)
+    }
+
+    best_model = None
+    best_f1_score = 0
+    best_model_name = ""
+
+    for name, model in models.items():
+        logger.info(f"Training model: {name}")
+        if name == "MLP":
+            from sklearn.preprocessing import StandardScaler
+            scaler = StandardScaler()
+            scaler.fit(x_train)
+            x_train = scaler.transform(x_train)
+            x_test = scaler.transform(x_test)
+        
         model.fit(x_train, y_train)
-        training_time = time.time() - start_time
-
         y_pred = model.predict(x_test)
 
-        accuracy = accuracy_score(y_test, y_pred)
-        precision = precision_score(y_test, y_pred, pos_label=positive_label)
-        recall = recall_score(y_test, y_pred, pos_label=positive_label)
-        f1 = f1_score(y_test, y_pred, pos_label=positive_label)
 
-        return {
-            "name": name,
-            "model": model,
-            "accuracy": accuracy,
-            "precision": precision,
-            "recall": recall,
-            "f1": f1,
-            "training_time": training_time
-        }
-    except Exception as e:
-        logger.error(f"Error training classifier {name}: {e}")
-        raise
+        score = accuracy_score(y_test, y_pred) * 100
+        precision = precision_score(y_test, y_pred, pos_label='Benign') * 100
+        recall = recall_score(y_test, y_pred, pos_label='Benign') * 100
+        f1 = f1_score(y_test, y_pred, pos_label='Benign')*100
 
-def train_model(df, modelname_prefix, output_folder, csv_file):
-    try:
-        logger.info(f"Starting model training for file: {csv_file}")
-        
-        # Amostragem do dataset para acelerar o treino
-        df = df.sample(frac=0.2, random_state=42)  # Usando 10% do dataset para treinamento
+        logger.info("Accuracy of the model %s is: %f", name, score)
+        logger.info("Precision of the model %s is: %f", name, precision)
+        logger.info("Recall of the model %s is: %f", name, recall)
+        logger.info(f"F1 score of the model {name} is: {f1}")
 
-        features = [
-            "Flow Duration", "Tot Fwd Pkts", "Tot Bwd Pkts", "TotLen Fwd Pkts", "TotLen Bwd Pkts",
-            "Flow Byts/s", "Flow Pkts/s", "Fwd Pkt Len Max", "Fwd Pkt Len Min", "Fwd Pkt Len Mean",
-            "Bwd Pkt Len Max", "Bwd Pkt Len Min", "Bwd Pkt Len Mean"
-        ]
-        target = "Label"
+        if f1 > best_f1_score:
+            best_f1_score = f1
+            best_model = model
+            best_model_name = name
 
-        df.columns = df.columns.str.strip()
+    logger.info(f"\nBest model is {best_model_name} with F1 score: {best_f1_score}")
 
-        missing_features = [feature for feature in features if feature not in df.columns]
-        if missing_features:
-            logger.warning(f"Missing features: {missing_features}. Skipping model training for this dataset.")
-            return
+    if best_model is not None:
+        y_pred = best_model.predict(x_test)
 
-        x = df.loc[:, features]
-        y = df.loc[:, target]
+        matrix = confusion_matrix(y_test, y_pred)
+        logger.info("\nConfusion Matrix:")
+        logger.info(matrix)
 
-        labels = y.unique()
-        positive_label = labels[1] if len(labels) > 1 else labels[0]
+        plot_confusion_matrix(matrix, class_names=['Benign', 'Attack'])
 
-        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42)
+        pickle.dump(best_model, open(f"./saved_model/bestmodel_v3.sav", 'wb'))
 
-        # Seleção de features
-        selector = SelectKBest(f_classif, k='all')
-        x_train = selector.fit_transform(x_train, y_train)
-        x_test = selector.transform(x_test)
-
-        classifiers = {
-            "RandomForest": RandomForestClassifier(),
-            "LogisticRegression": LogisticRegression(max_iter=2000),
-            "GaussianNB": GaussianNB(),
-            "MLP": MLPClassifier(max_iter=2000)
-        }
-
-        best_model = None
-        best_score = 0
-        best_model_name = ""
-        best_time = 0
-
-        with ThreadPoolExecutor() as executor:
-            futures = []
-            for name, model in classifiers.items():
-                futures.append(executor.submit(train_classifier, name, model, x_train, y_train, x_test, y_test, positive_label))
-
-            for future in as_completed(futures):
-                result = future.result()
-                logger.info(f"Accuracy: {result['accuracy']}, Precision: {result['precision']}, Recall: {result['recall']}, F1 Score: {result['f1']}, Training time: {result['training_time']:.2f} seconds, Model: {result['name']}")
-
-                if result['f1'] > best_score:
-                    best_score = result['f1']
-                    best_model = result['model']
-                    best_model_name = result['name']
-                    best_time = result['training_time']
-
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
-        
-        filename = os.path.join(output_folder, f'{modelname_prefix}_{best_model_name}_v2.sav')
-        pickle.dump(best_model, open(filename, 'wb'))
-        logger.info(f"Best model: {best_model_name} with F1 Score: {best_score}, training time: {best_time:.2f} seconds, saved successfully as {filename}\n")
-    except Exception as e:
-        logger.error(f"Error in training model for file {csv_file}: {e}")
-        raise
-
-input_folder = 'dataset'
-output_folder = './saved_model'
-
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
-
-# Train individual models
-for csv_file in os.listdir(input_folder):
-    if csv_file.endswith('.csv'):
-        try:
-            file_path = os.path.join(input_folder, csv_file)
-            logger.info(f'Processing file: {file_path}')
-            df = pd.read_csv(file_path, low_memory=False)
-            df = treatDataset(df)
-            modelname_prefix = os.path.splitext(csv_file)[0]
-            train_model(df, modelname_prefix, output_folder, csv_file)
-        except Exception as e:
-            logger.error(f"Error processing file {csv_file}: {e}")
-
-logger.info("All CSV files processed, models trained, and best models saved successfully.")
+if __name__ == "__main__":
+    dfTreated = treatDataset(df)
+    train_and_evaluate_models(dfTreated)
